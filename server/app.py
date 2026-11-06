@@ -40,8 +40,21 @@ def broadcast_message():
         "A5": 35730, "B5": 35731, "C5": 35732, "D5": 35733, "E5": 35734
     }
     port = grid_map[grid]
-    cmd = ["mcrcon", "-H", "127.0.0.1", "-P", str(port), "-p", str(rcon_pw), "broadcast", message]
-    subprocess.Popen(cmd, shell=False)
+    cmd = ["mcrcon", "-H", "127.0.0.1", "-P", str(port), "-p", str(rcon_pw), "-t"]
+    try:
+        result = subprocess.run(
+            cmd,
+            input=f"broadcast {message}\nQ\n",
+            text=True,
+            capture_output=True,
+            timeout=10,
+            shell=False,
+            check=False,
+        )
+    except subprocess.TimeoutExpired:
+        return jsonify({"error": "RCON command timed out."}), 504
+    if result.returncode != 0:
+        return jsonify({"error": "RCON command failed."}), 502
     return jsonify({"status": "sent", "grid": grid})
 
 @app.route("/api/start/<grid>", methods=["GET"])
