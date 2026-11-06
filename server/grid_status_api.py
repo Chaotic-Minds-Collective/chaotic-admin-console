@@ -61,4 +61,4 @@ def grid_status():
     return jsonify(grids)
 
 if __name__ == "__main__":
-    app.run(port=5050, debug=True)
+    app.run(port=5050, debug=False)
