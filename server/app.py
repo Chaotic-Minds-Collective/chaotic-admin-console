@@ -1,7 +1,7 @@
 from flask import Flask, request, jsonify
 import subprocess
 import json
-import os
+import re
 
 app = Flask(__name__)
 CONFIG_PATH = '../data/config.json'
@@ -17,12 +17,19 @@ def get_config():
 
 @app.route("/api/broadcast", methods=["POST"])
 def broadcast_message():
-    data = request.json
+    data = request.get_json(silent=True)
+    if not isinstance(data, dict):
+        return jsonify({"error": "A JSON object is required."}), 400
+
     grid = data.get("grid")
     message = data.get("message")
+    if not isinstance(grid, str) or not re.fullmatch(r"[A-E][1-5]", grid):
+        return jsonify({"error": "Invalid grid identifier."}), 400
+    if not isinstance(message, str) or not message.strip() or len(message) > 500:
+        return jsonify({"error": "Message must be a non-empty string of at most 500 characters."}), 400
+
     config = load_config()
     rcon_pw = config.get("rcon_password", "changeme")
-    rcon_port_start = config.get("rcon_port_start", 35710)
     grid_map = {
         "A1": 35710, "B1": 35711, "C1": 35712, "D1": 35713, "E1": 35714,
         "A2": 35715, "B2": 35716, "C2": 35717, "D2": 35718, "E2": 35719,
@@ -30,15 +37,17 @@ def broadcast_message():
         "A4": 35725, "B4": 35726, "C4": 35727, "D4": 35728, "E4": 35729,
         "A5": 35730, "B5": 35731, "C5": 35732, "D5": 35733, "E5": 35734
     }
-    port = grid_map.get(grid, rcon_port_start)
-    cmd = f'mcrcon -H 127.0.0.1 -P {port} -p {rcon_pw} broadcast "{message}"'
-    subprocess.Popen(cmd, shell=True)
+    port = grid_map[grid]
+    cmd = ["mcrcon", "-H", "127.0.0.1", "-P", str(port), "-p", str(rcon_pw), "broadcast", message]
+    subprocess.Popen(cmd, shell=False)
     return jsonify({"status": "sent", "grid": grid})
 
 @app.route("/api/start/<grid>", methods=["GET"])
 def start_grid(grid):
+    if not re.fullmatch(r"[A-E][1-5]", grid):
+        return jsonify({"error": "Invalid grid identifier."}), 400
     script = load_config().get("batch_file", "Start_5x5_custom.bat")
-    subprocess.Popen([script, grid], shell=True)
+    subprocess.Popen([script, grid], shell=False)
     return jsonify({"status": "started", "grid": grid})
 
 @app.route("/api/stop/<grid>", methods=["GET"])
@@ -47,4 +56,4 @@ def stop_grid(grid):
     return jsonify({"status": "stop not implemented", "grid": grid})
 
 if __name__ == "__main__":
-    app.run(port=5000, debug=True)
+    app.run(port=5000, debug=False)
