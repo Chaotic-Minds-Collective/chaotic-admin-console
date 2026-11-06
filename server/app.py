@@ -27,6 +27,8 @@ def broadcast_message():
         return jsonify({"error": "Invalid grid identifier."}), 400
     if not isinstance(message, str) or not message.strip() or len(message) > 500:
         return jsonify({"error": "Message must be a non-empty string of at most 500 characters."}), 400
+    if re.search(r"[\x00-\x1f\x7f;\"\\]", message):
+        return jsonify({"error": "Message contains unsupported control or command-delimiter characters."}), 400
 
     config = load_config()
     rcon_pw = config.get("rcon_password", "changeme")
