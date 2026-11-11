@@ -1,41 +1,60 @@
 import React, { useEffect, useState } from 'react';
 import './MobileDashboard.css';
 
+const API_BASE_URL = process.env.REACT_APP_STATUS_API_URL || 'http://localhost:5050';
+
 export default function MobileDashboard() {
   const [restartTime, setRestartTime] = useState(null);
+  const [restartStatus, setRestartStatus] = useState('Not scheduled');
   const [grids, setGrids] = useState({});
+  const [countdown, setCountdown] = useState('Not scheduled');
 
   useEffect(() => {
-    fetch('http://localhost:5050/api/grid-status')
-      .then(res => res.json())
-      .then(data => setGrids(data));
+    fetch(`${API_BASE_URL}/api/grid-status`)
+      .then(response => {
+        if (!response.ok) throw new Error(`Grid status request failed (${response.status}).`);
+        return response.json();
+      })
+      .then(setGrids)
+      .catch(error => setRestartStatus(error.message));
 
-    fetch('http://localhost:5000/data/restart-time.json')
-      .then(res => res.json())
-      .then(data => setRestartTime(new Date(data.restart_time_utc)));
+    fetch(`${API_BASE_URL}/api/restart-time`)
+      .then(response => {
+        if (!response.ok) throw new Error(response.status === 404 ? 'Not scheduled' : `Restart schedule request failed (${response.status}).`);
+        return response.json();
+      })
+      .then(data => {
+        const date = new Date(data.restart_time_utc);
+        if (Number.isNaN(date.getTime())) throw new Error('Restart schedule contains an invalid date.');
+        setRestartTime(date);
+        setRestartStatus('');
+      })
+      .catch(error => setRestartStatus(error.message));
   }, []);
 
-  const [countdown, setCountdown] = useState('');
   useEffect(() => {
-    const interval = setInterval(() => {
-      if (restartTime) {
-        const diff = Math.floor((restartTime - new Date()) / 1000);
-        if (diff <= 0) {
-          setCountdown('Restarting now...');
-        } else {
-          const m = Math.floor(diff / 60);
-          const s = diff % 60;
-          setCountdown(`${m}m ${s < 10 ? '0' : ''}${s}s`);
-        }
+    if (!restartTime) return undefined;
+
+    const updateCountdown = () => {
+      const diff = Math.floor((restartTime - new Date()) / 1000);
+      if (diff <= 0) {
+        setCountdown('Restarting now...');
+        return;
       }
-    }, 1000);
+      const minutes = Math.floor(diff / 60);
+      const seconds = diff % 60;
+      setCountdown(`${minutes}m ${seconds < 10 ? '0' : ''}${seconds}s`);
+    };
+
+    updateCountdown();
+    const interval = setInterval(updateCountdown, 1000);
     return () => clearInterval(interval);
   }, [restartTime]);
 
   return (
     <div className="mobile-dashboard">
       <h2>Chaotic ATLAS Dashboard</h2>
-      <div className="countdown">⏳ Restart in: {countdown}</div>
+      <div className="countdown" role="status">⏳ Restart in: {restartTime ? countdown : restartStatus}</div>
       <div className="grid-summary">
         {Object.entries(grids).map(([id, info]) => (
           <div key={id} className={`grid-card ${info.status}`}>

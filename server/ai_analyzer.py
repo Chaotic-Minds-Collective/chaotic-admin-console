@@ -1,5 +1,3 @@
-import re
-
 def analyze_log(log_text):
     issues = []
 
@@ -18,7 +16,4 @@ def analyze_log(log_text):
     if not issues:
         issues.append("No critical issues detected. May be normal shutdown or log.")
 
-    summary = "Possible issues:
-" + "
-".join(f"- {i}" for i in issues)
-    return summary
+    return "Possible issues:\n" + "\n".join(f"- {issue}" for issue in issues)

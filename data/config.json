@@ -1,7 +1,5 @@
 {
   "server_ip": "147.135.97.47",
-  "rcon_password": "cmg2024",
   "rcon_port_start": 35710,
-  "rcon_port_end": 35758,
-  "discord_webhook": "https://discord.com/api/webhooks/.../..."
+  "rcon_port_end": 35758
 }
