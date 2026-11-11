@@ -6,6 +6,7 @@ const API_BASE_URL = process.env.REACT_APP_STATUS_API_URL || 'http://localhost:5
 export default function MobileDashboard() {
   const [restartTime, setRestartTime] = useState(null);
   const [restartStatus, setRestartStatus] = useState('Not scheduled');
+  const [gridStatus, setGridStatus] = useState('');
   const [grids, setGrids] = useState({});
   const [countdown, setCountdown] = useState('Not scheduled');
 
@@ -16,7 +17,7 @@ export default function MobileDashboard() {
         return response.json();
       })
       .then(setGrids)
-      .catch(error => setRestartStatus(error.message));
+      .catch(error => setGridStatus(error.message));
 
     fetch(`${API_BASE_URL}/api/restart-time`)
       .then(response => {
@@ -55,6 +56,7 @@ export default function MobileDashboard() {
     <div className="mobile-dashboard">
       <h2>Chaotic ATLAS Dashboard</h2>
       <div className="countdown" role="status">⏳ Restart in: {restartTime ? countdown : restartStatus}</div>
+      {gridStatus && <p role="alert">{gridStatus}</p>}
       <div className="grid-summary">
         {Object.entries(grids).map(([id, info]) => (
           <div key={id} className={`grid-card ${info.status}`}>
