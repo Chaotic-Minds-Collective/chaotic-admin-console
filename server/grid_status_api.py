@@ -23,7 +23,8 @@ GRID_TYPES = {
     "E3": "PvP",
     "E4": "PvP",
 }
-GRID_IDS = [f"{row}{column}" for row in "ABCDE" for column in "12345"]
+# Preserve the deployed port order used by admin broadcasts: A1, B1, ..., E5.
+GRID_IDS = [f"{row}{column}" for column in "12345" for row in "ABCDE"]
 
 
 def is_port_open(ip, port, timeout=1):
