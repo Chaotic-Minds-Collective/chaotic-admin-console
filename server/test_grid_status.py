@@ -20,15 +20,19 @@ class GridStatusTest(unittest.TestCase):
         ]
         with tempfile.TemporaryDirectory() as directory:
             config_path = Path(directory) / "config.json"
-            for base_port in (35710, 40000):
-                with self.subTest(base_port=base_port):
+            for base_port, index in (
+                (base_port, index)
+                for base_port in (35710, 40000)
+                for index in range(len(layout))
+            ):
+                with self.subTest(base_port=base_port, index=index):
                     config_path.write_text(json.dumps({
                         "server_ip": "192.0.2.1",
                         "rcon_port_start": base_port,
                     }), encoding="utf-8")
                     with patch.object(grid_status_api, "CONFIG_PATH", config_path), patch.object(
                         grid_status_api, "is_port_open",
-                        side_effect=lambda host, port: port == base_port + 1,
+                        side_effect=lambda host, port: port == base_port + index,
                     ) as probe:
                         response = grid_status_api.app.test_client().get("/api/grid-status")
                     self.assertEqual(response.status_code, 200)
@@ -39,6 +43,6 @@ class GridStatusTest(unittest.TestCase):
                     for grid in layout:
                         self.assertEqual(
                             response.json[grid]["status"],
-                            "online" if grid == "B1" else "offline",
+                            "online" if grid == layout[index] else "offline",
                             grid,
                         )
