@@ -14,13 +14,16 @@ ADMIN_UI_ORIGIN = os.environ.get("ADMIN_UI_ORIGIN", "http://localhost:3000")
 
 
 def load_config():
+    """Read the server configuration from the configured JSON file."""
     with CONFIG_PATH.open(encoding="utf-8") as config_file:
         return json.load(config_file)
 
 
 def admin_required(handler):
+    """Protect a handler with a configured Bearer token of at least 32 characters."""
     @wraps(handler)
     def wrapped(*args, **kwargs):
+        """Reject invalid admin credentials before calling the handler."""
         token = os.environ.get("ADMIN_API_TOKEN", "")
         if len(token) < 32:
             return jsonify({"error": "ADMIN_API_TOKEN must be configured with at least 32 characters."}), 503
@@ -35,6 +38,7 @@ def admin_required(handler):
 
 @app.after_request
 def add_cors_headers(response):
+    """Allow admin UI requests only from the configured browser origin."""
     origin = request.headers.get("Origin")
     if origin == ADMIN_UI_ORIGIN:
         response.headers["Access-Control-Allow-Origin"] = origin
@@ -46,6 +50,7 @@ def add_cors_headers(response):
 
 @app.route("/api/config", methods=["GET"])
 def get_config():
+    """Return only public configuration fields to the client."""
     config = load_config()
     public_keys = ("server_ip", "rcon_port_start", "rcon_port_end")
     return jsonify({key: config[key] for key in public_keys if key in config})
@@ -54,6 +59,7 @@ def get_config():
 @app.route("/api/broadcast", methods=["POST"])
 @admin_required
 def broadcast_message():
+    """Validate a broadcast and send it to the selected grid through mcrcon."""
     data = request.get_json(silent=True)
     if not isinstance(data, dict):
         return jsonify({"error": "A JSON object is required."}), 400
@@ -99,6 +105,7 @@ def broadcast_message():
 @app.route("/api/start/<grid>", methods=["POST"])
 @admin_required
 def start_grid(grid):
+    """Validate the grid and launch its configured startup script."""
     if not re.fullmatch(r"[A-E][1-5]", grid):
         return jsonify({"error": "Invalid grid identifier."}), 400
     script = load_config().get("batch_file", "Start_5x5_custom.bat")
@@ -113,6 +120,7 @@ def start_grid(grid):
 @app.route("/api/stop/<grid>", methods=["POST"])
 @admin_required
 def stop_grid(grid):
+    """Validate the grid and report that stopping is not implemented."""
     if not re.fullmatch(r"[A-E][1-5]", grid):
         return jsonify({"error": "Invalid grid identifier."}), 400
     return jsonify({"status": "stop not implemented", "grid": grid}), 501

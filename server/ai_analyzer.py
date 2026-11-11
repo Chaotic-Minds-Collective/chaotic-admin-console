@@ -1,4 +1,5 @@
 def analyze_log(log_text):
+    """Describe known error patterns found in log text without external requests."""
     issues = []
 
     if "Fatal error" in log_text:

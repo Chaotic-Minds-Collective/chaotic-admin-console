@@ -27,6 +27,7 @@ GRID_IDS = [f"{row}{column}" for row in "ABCDE" for column in "12345"]
 
 
 def is_port_open(ip, port, timeout=1):
+    """Check whether a TCP connection succeeds within the given timeout."""
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
         sock.settimeout(timeout)
         try:
@@ -38,6 +39,7 @@ def is_port_open(ip, port, timeout=1):
 
 @app.after_request
 def add_cors_headers(response):
+    """Allow dashboard requests only from the configured browser origin."""
     origin = request.headers.get("Origin")
     if origin == DASHBOARD_ORIGIN:
         response.headers["Access-Control-Allow-Origin"] = origin
@@ -47,6 +49,7 @@ def add_cors_headers(response):
 
 @app.route("/api/grid-status")
 def grid_status():
+    """Read grid configuration and return TCP availability for each grid."""
     try:
         with CONFIG_PATH.open(encoding="utf-8") as config_file:
             config = json.load(config_file)
@@ -74,6 +77,7 @@ def grid_status():
 
 @app.route("/api/restart-time")
 def restart_time():
+    """Return a timezone-aware restart schedule or an error for missing or invalid data."""
     try:
         with RESTART_PATH.open(encoding="utf-8") as restart_file:
             data = json.load(restart_file)
@@ -86,7 +90,9 @@ def restart_time():
     if not isinstance(data, dict) or not isinstance(data.get("restart_time_utc"), str):
         return jsonify({"error": "Restart schedule must contain restart_time_utc."}), 500
     try:
-        datetime.fromisoformat(data["restart_time_utc"].replace("Z", "+00:00"))
+        timestamp = datetime.fromisoformat(data["restart_time_utc"].replace("Z", "+00:00"))
+        if timestamp.utcoffset() is None:
+            raise ValueError("A timezone offset is required")
     except ValueError:
         return jsonify({"error": "restart_time_utc must be a valid ISO 8601 timestamp."}), 500
     return jsonify(data)

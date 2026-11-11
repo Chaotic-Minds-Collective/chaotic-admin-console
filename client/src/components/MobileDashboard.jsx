@@ -19,18 +19,37 @@ export default function MobileDashboard() {
       .then(setGrids)
       .catch(error => setGridStatus(error.message));
 
-    fetch(`${API_BASE_URL}/api/restart-time`)
-      .then(response => {
+  }, []);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    let active = true;
+    let timeout;
+    const refreshSchedule = async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/restart-time`, { signal: controller.signal });
         if (!response.ok) throw new Error(response.status === 404 ? 'Not scheduled' : `Restart schedule request failed (${response.status}).`);
-        return response.json();
-      })
-      .then(data => {
+        const data = await response.json();
         const date = new Date(data.restart_time_utc);
         if (Number.isNaN(date.getTime())) throw new Error('Restart schedule contains an invalid date.');
+        if (!active) return;
         setRestartTime(date);
         setRestartStatus('');
-      })
-      .catch(error => setRestartStatus(error.message));
+      } catch (error) {
+        if (!active) return;
+        setRestartTime(null);
+        setRestartStatus(error.message);
+      } finally {
+        if (active) timeout = setTimeout(refreshSchedule, 30000);
+      }
+    };
+
+    refreshSchedule();
+    return () => {
+      active = false;
+      clearTimeout(timeout);
+      controller.abort();
+    };
   }, []);
 
   useEffect(() => {

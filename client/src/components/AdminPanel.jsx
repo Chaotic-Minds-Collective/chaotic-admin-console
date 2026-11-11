@@ -16,7 +16,7 @@ export default function AdminPanel() {
         Authorization: `Bearer ${apiToken.trim()}`
       }
     });
-    const data = await response.json();
+    const data = await response.json().catch(() => ({}));
     if (!response.ok) {
       throw new Error(data.error || `Request failed (${response.status}).`);
     }
@@ -57,7 +57,7 @@ export default function AdminPanel() {
   const handleLoadConfig = async () => {
     try {
       const response = await fetch(`${API_BASE_URL}/api/config`);
-      const data = await response.json();
+      const data = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(data.error || `Request failed (${response.status}).`);
       setConfig(data);
     } catch (error) {
