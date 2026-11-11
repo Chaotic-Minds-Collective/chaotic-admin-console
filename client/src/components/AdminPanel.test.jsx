@@ -28,3 +28,35 @@ test('admin actions and config preserve HTTP errors when the response is not JSO
     delete global.fetch;
   }
 });
+
+
+test('config loading reports invalid successful JSON and preserves the last valid config', async () => {
+  const container = document.createElement('div');
+  const root = createRoot(container);
+  global.alert = jest.fn();
+  global.fetch = jest.fn();
+  act(() => root.render(<AdminPanel />));
+  try {
+    const button = [...container.querySelectorAll('button')].find(node => node.textContent === 'Load Config');
+    const invalidResponse = { ok: true, json: () => Promise.reject(new SyntaxError('HTML response')) };
+    fetch.mockResolvedValue(invalidResponse);
+    await act(async () => button.click());
+    expect(alert).toHaveBeenLastCalledWith('Config response contains invalid JSON.');
+    expect(container.querySelector('pre')).toBeNull();
+
+    const config = { server_ip: '127.0.0.1', rcon_port_start: 35710 };
+    fetch.mockResolvedValue({ ok: true, json: async () => config });
+    alert.mockClear();
+    await act(async () => button.click());
+    expect(alert).not.toHaveBeenCalled();
+    expect(JSON.parse(container.querySelector('pre').textContent)).toEqual(config);
+
+    fetch.mockResolvedValue(invalidResponse);
+    await act(async () => button.click());
+    expect(alert).toHaveBeenLastCalledWith('Config response contains invalid JSON.');
+    expect(JSON.parse(container.querySelector('pre').textContent)).toEqual(config);
+  } finally {
+    act(() => root.unmount());
+    delete global.fetch;
+  }
+});
