@@ -12,5 +12,8 @@
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test --watchAll=false"
+  },
+  "engines": {
+    "node": ">=20.0.0"
   }
 }

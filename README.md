@@ -13,10 +13,10 @@ React dashboard and Flask services for the ATLAS control center.
 
 <!-- coderabbit-ai-generated:v1 -->
 
-<!-- coderabbit-ai-generated-section:v1:cbeb36c7a28a06f936068085f579ad2695c3a663024ac0bd7bd98ec82c91cb76 -->
+<!-- coderabbit-ai-generated-section:v1:5343b04ed580d74b263c4928f8f3be6c401a3542e35f1b2cd09070ee41f0bed3 -->
 
 - Python 3.10 or later
-- Node.js 18 or later and npm
+- Node.js 20 or later and npm
 - The game server/RCON configuration required by your deployment
 - `mcrcon`, available on the admin API process's `PATH` and executable by that process, is required for broadcasts.
 
