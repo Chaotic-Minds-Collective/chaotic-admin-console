@@ -1,6 +1,6 @@
-# Chaotic Unified Admin Console
+# CMG ATLAS Admin Console Plugin
 
-React dashboard and Flask services for the ATLAS control center.
+The **Chaotic Minds Gaming (CMG) ATLAS Admin Console Plugin** provides a React dashboard and Flask services for ATLAS server administration.
 
 ## Features
 
