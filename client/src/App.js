@@ -11,7 +11,7 @@ function App() {
     <Router>
       <div className="app">
         <nav className="sidebar">
-          <h2>Chaotic Console</h2>
+          <h2>CMG Admin Console</h2>
           <NavLink to="/" end>Dashboard</NavLink>
           <NavLink to="/admin">Admin Panel</NavLink>
           <NavLink to="/grid">Grid Visualizer</NavLink>
